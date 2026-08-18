@@ -1,32 +1,75 @@
-from backend.app.config import RSS_DIR
-from backend.app.etl.rss_parser import parse_rss
+from backend.app.config import HTML_DIR, IMAGES_DIR
+from backend.app.etl.content_classifier import (
+    classify_content,
+)
+from backend.app.etl.html_parser import parse_html
 
 
-def find_rss_file():
-    rss_files = sorted(RSS_DIR.glob("*.xml"))
+IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
 
-    if not rss_files:
-        raise FileNotFoundError(
-            f"No XML files found in {RSS_DIR}"
-        )
 
-    return rss_files[0]
+def has_matching_image(html_file):
+    return any(
+        (IMAGES_DIR / f"{html_file.stem}{extension}").exists()
+        for extension in IMAGE_EXTENSIONS
+    )
+
+
+def text_length(value):
+    return len(value) if value else 0
 
 
 def main():
-    rss_file = find_rss_file()
-    job_postings = parse_rss(rss_file)
+    html_files = sorted(HTML_DIR.glob("*.html"))
 
-    print(f"RSS file: {rss_file.name}")
-    print(f"Job postings found: {len(job_postings)}")
+    print(f"HTML files found: {len(html_files)}")
     print()
 
-    for job in job_postings[:5]:
-        print(
-            f"{job['source_job_id']} | "
-            f"{job['title']} | "
-            f"{job['publication_date']}"
-        )
+    for html_file in html_files:
+        try:
+            job = parse_html(html_file)
+            has_image = has_matching_image(html_file)
+
+            content_type = classify_content(
+                job["full_html_text"],
+                has_image,
+            )
+
+            print(f"File: {html_file.name}")
+            print(f"  ID: {job['source_job_id']}")
+            print(f"  Title: {job['title']}")
+            print(f"  Company: {job['company']}")
+            print(f"  Location: {job['location']}")
+            print(f"  Published: {job['publication_date']}")
+            print(f"  Deadline: {job['deadline']}")
+            print(f"  Salary: {job['salary']}")
+            print(f"  Content type: {content_type}")
+            print(
+                f"  Description length: "
+                f"{text_length(job['description'])}"
+            )
+            print(
+                f"  Requirements length: "
+                f"{text_length(job['requirements'])}"
+            )
+            print(
+                f"  Offer length: "
+                f"{text_length(job['offer'])}"
+            )
+            print(
+                f"  Full HTML length: "
+                f"{text_length(job['full_html_text'])}"
+            )
+            print(
+                f"  Iframe source: "
+                f"{job['iframe_source']}"
+            )
+            print()
+
+        except Exception as error:
+            print(f"File: {html_file.name}")
+            print(f"  ERROR: {error}")
+            print()
 
 
 if __name__ == "__main__":
