@@ -1,0 +1,44 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# VS Code settings
+.vscode/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local source data
+data/raw/html/*
+data/raw/images/*
+data/raw/rss/*
+data/processed/*
+
+# Keep empty data folders in Git
+!data/raw/html/.gitkeep
+!data/raw/images/.gitkeep
+!data/raw/rss/.gitkeep
+!data/processed/.gitkeep
+
+# Logs and temporary files
+*.log
+temp/
+tmp/
+
+# Temporary Microsoft Office files
+~$*.docx
+~$*.xlsx
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
