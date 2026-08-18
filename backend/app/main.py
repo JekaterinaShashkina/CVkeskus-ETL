@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from backend.app.config import HTML_DIR, IMAGES_DIR
+from backend.app.config import HTML_DIR, IMAGES_DIR, PROCESSED_DIR
 from backend.app.etl.content_classifier import (
     classify_content,
     needs_ocr,
@@ -8,6 +8,9 @@ from backend.app.etl.content_classifier import (
 from backend.app.etl.html_parser import parse_html
 from backend.app.etl.ocr_service import (
     extract_text_from_image,
+)
+from backend.app.loaders.json_writer import (
+    save_jobs_to_json,
 )
 
 
@@ -41,6 +44,7 @@ def apply_ocr(
     job["ocr_required"] = ocr_required
     job["ocr_text"] = None
     job["ocr_error"] = None
+    job["extracted_text"] = job["full_html_text"]
 
     if not ocr_required:
         job["ocr_status"] = "not_required"
@@ -56,6 +60,7 @@ def apply_ocr(
         )
         job["ocr_status"] = "success"
         job["text_extraction_method"] = "ocr"
+        job["extracted_text"] = job["ocr_text"]
 
     except Exception as error:
         job["ocr_status"] = "failed"
@@ -125,6 +130,8 @@ def main() -> None:
     print(f"HTML files found: {len(html_files)}")
     print()
 
+    processed_jobs: list[dict[str, object]] = []
+
     for html_file in html_files:
         try:
             job = parse_html(html_file)
@@ -160,11 +167,25 @@ def main() -> None:
                 html_file,
                 job,
             )
+            processed_jobs.append(job)
 
         except Exception as error:
             print(f"File: {html_file.name}")
             print(f"  ERROR: {error}")
             print()
+
+    output_file = PROCESSED_DIR / "jobs.json"
+
+    save_jobs_to_json(
+        processed_jobs,
+        output_file,
+    )
+
+    print(
+        f"Processed jobs saved: "
+        f"{len(processed_jobs)}"
+    )
+    print(f"Output file: {output_file}")
 
 
 if __name__ == "__main__":
