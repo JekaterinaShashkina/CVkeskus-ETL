@@ -18,3 +18,21 @@ def classify_content(
         return "image_only"
 
     return "insufficient"
+
+def needs_ocr(
+    content_type: str,
+    description: str | None,
+    requirements: str | None,
+) -> bool:
+    """Determine whether OCR processing is required."""
+
+    if content_type == "image_only":
+        return True
+
+    if content_type == "mixed":
+        return not (
+            description
+            and requirements
+        )
+
+    return False

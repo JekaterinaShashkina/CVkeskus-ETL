@@ -1,6 +1,7 @@
 from backend.app.config import HTML_DIR, IMAGES_DIR
 from backend.app.etl.content_classifier import (
     classify_content,
+    needs_ocr
 )
 from backend.app.etl.html_parser import parse_html
 
@@ -34,6 +35,11 @@ def main():
                 job["full_html_text"],
                 has_image,
             )
+            ocr_required = needs_ocr(
+                content_type,
+                job["description"],
+                job["requirements"],
+            )
 
             print(f"File: {html_file.name}")
             print(f"  ID: {job['source_job_id']}")
@@ -63,6 +69,9 @@ def main():
             print(
                 f"  Iframe source: "
                 f"{job['iframe_source']}"
+            )
+            print(
+                f"  OCR required: {ocr_required}"
             )
             print()
 
